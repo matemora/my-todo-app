@@ -1,28 +1,19 @@
+// Importa o componente cliente que exibirá a lista.
 import TodoList from "./_components/TodoList";
-
-interface Todo {
-  id: number;
-  title: string;
-  completed: boolean;
-}
-
-
-// Essa função simula a busca dos dados iniciais da nossa API
-async function getInitialTodos() {
-  const response = await fetch('http://localhost:3000/api/todos');
-  const result = await response.json() as Todo[];
-
-  return result;
-}
-// Em uma aplicação real, você faria a chamada diretamente aqui.
-
+import { getTodos } from "./actions";
+// Este componente é um Server Component, indicado pela ausência de `"use client"`.
+// Ele é assíncrono porque precisa esperar a busca de dados terminar.
 export default async function HomePage() {
-  const initialTodos = await getInitialTodos();
+  // A busca dos dados acontece aqui, no servidor.
+  const initialTodos = await getTodos();
 
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-lg">
-      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Minhas Tarefas</h1>
-      <TodoList initialTodos={initialTodos} />
-    </div>
+    <main className="flex min-h-screen flex-col items-center p-24">
+      <h1 className="text-4xl font-bold mb-8 text-gray-800">
+        Minha To-Do List
+      </h1>
+      {/* Passa a lista inicial para o componente cliente `TodoList` */}
+      <TodoList initialTodos={initialTodos.todos} />
+    </main>
   );
 }
