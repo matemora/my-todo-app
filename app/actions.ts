@@ -11,10 +11,20 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "./lib/prisma";
 
 export async function getTodos() {
-  const todos = await prisma;
+  const todos = await prisma.todo.findMany();
   // Retorna a lista de tarefas como um JSON.
   // Essa é a única API Route que precisaremos, já que o resto será feito por Server Actions.
-  return { todos };
+  const mapTodos = todos.map(t => {
+    return {
+      id: String(t.id),
+      task: t.title,
+      completed: t.completed,
+    }
+  });
+
+  return {
+    todos: mapTodos
+  }
 }
 
 // --- Server Action para criar uma nova tarefa ---
