@@ -3,8 +3,6 @@
 // ou seja, código que só pode ser executado no servidor.
 "use server";
 
-// Importa nossa lista de tarefas "de banco de dados"
-import { todos } from "@/utils/todos";
 
 // Importa `revalidatePath` para forçar a atualização dos dados na página
 import { revalidatePath } from "next/cache";
