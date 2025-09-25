@@ -11,7 +11,16 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "./lib/prisma";
 
 export async function getTodos() {
-  const todos = await prisma.todo.findMany();
+  const todos = await prisma.todo.findMany({
+    select: {
+      id: true,
+      title: true,
+      completed: true,
+    },
+    where: {
+      completed: false,
+    }
+  });
   // Retorna a lista de tarefas como um JSON.
   // Essa é a única API Route que precisaremos, já que o resto será feito por Server Actions.
   const mapTodos = todos.map(t => {
@@ -40,58 +49,54 @@ export async function createTodo(prev: unknown, formData: FormData) {
   }
 
   // Cria um novo objeto de tarefa com um ID único (usando o timestamp)
-  const newTodo = {
-    id: Date.now().toString(),
-    task,
-    completed: false,
-  };
+  const todo = await prisma.todo.create({
+    data: {
+      title: task,
+    }
+  });
 
   // Adiciona a nova tarefa ao nosso array de "banco de dados".
-  todos.push(newTodo);
+  
 
   // **Ponto chave**: `revalidatePath` diz ao Next.js para invalidar o cache da
   // rota `/` (nossa página inicial). Isso fará com que o Server Component `HomePage`
   // seja re-renderizado na próxima navegação ou no próximo request, buscando
   // os dados atualizados.
   revalidatePath("/");
-  console.log(todos);
-  return { ok: true, todos: todos };
+  return { ok: true };
 }
 
 // --- Server Action para deletar uma tarefa ---
 // Esta função recebe o ID da tarefa como argumento.
 export async function deleteTodo(id: string) {
   // Encontra o índice da tarefa no array com base no ID.
-  const todoIndex = todos.findIndex((t) => t.id === id);
-
-  if (todoIndex === -1) {
-    return { error: "Tarefa não encontrada" };
-  }
-
-  // Remove a tarefa do array usando o índice.
-  todos.splice(todoIndex, 1);
+  const todo = await prisma.todo.delete({
+    where: {id: parseInt(id)}
+  });
 
   // Revalida o cache da rota para atualizar a lista no frontend.
   revalidatePath("/");
-  console.log(todos);
-  return { ok: true, message: "Tarefa deletada com sucesso", todos };
+  return { ok: true, message: "Tarefa deletada com sucesso" };
 }
 
 // --- Server Action para completar/incompletar uma tarefa ---
 // Esta função também recebe o ID da tarefa como argumento.
 export async function completeTodo(id: string) {
   // Encontra o objeto da tarefa no array com base no ID.
-  const todo = todos.find((t) => t.id === id);
+  const todo = await prisma.todo.findFirst({where: {id: parseInt(id)}});
 
   if (!todo) {
-    return { error: "Tarefa não encontrada" };
+    throw new Error ('Todo nao encontrado');
   }
 
-  // Alterna o status `completed` da tarefa.
-  todo.completed = !todo.completed;
+  const result = await prisma.todo.update({
+    where: {id: parseInt(id)},
+    data: {
+      completed: !todo.completed,
+    }
+  })
 
   // Revalida o cache da rota para que a mudança apareça para o usuário.
   revalidatePath("/");
-  console.log(todos);
-  return { ok: true, todos };
+  return { ok: true };
 }

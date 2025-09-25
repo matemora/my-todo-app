@@ -17,7 +17,6 @@ export default function TodoList({ initialTodos }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(createTodo, {
     ok: true,
-    todos: initialTodos,
   });
 
   // A função `handleAddTodo` será a `action` do nosso formulário.
